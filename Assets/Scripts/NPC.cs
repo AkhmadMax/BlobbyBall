@@ -2,6 +2,11 @@
 using System.Collections.Generic;
 using UnityEngine;
 
+/// <summary>
+///     JON23:  1. Name of the class does not reflect its content fully. The class basically implements AI of NPC
+///             2. The code is too rigid to extentions and not reactive to modifications of the scene it acts in
+///             3. The NPC would break if a second ball would be introduced to the scene
+/// </summary>
 public class NPC : MonoBehaviour {
 
     Transform ball;
@@ -10,17 +15,24 @@ public class NPC : MonoBehaviour {
     void Awake()
     {
         controller = GetComponent<PlayerController>();
-
     }
 
     private void Start()
     {
         ball = BallBehaviour.Instance.transform;
-
     }
 
+    /// <summary>
+    ///    JON23:   1.  The two blocks of code for left and right side logic is basically a copy-paste . It contradicts DRY principle
+    ///             2.  Throwing code directly into Update methods is bad for code readability. What happens there exactly?
+    ///             3.  The code need to be decomposed at least to several methods
+    ///             4.  I see I've put comments to help myself navigate in the code. Comments tend to outdate, instead I should have just split the code into smaller pieces
+    ///             5.  There are arbitrary numbers like 0.2, 0.3, 0.5 without any name or meaning. It drastically decreases quality of the code. Should be replaced with meaningful variables
+    ///                 I can see that these mystic numbers depend on the size of the rigidbody. It means that if the player size changes this values will stop working as expected
+    /// </summary>
     void Update()
     {
+
         if(controller.initPos.x < 0) // if NPC plays on left field
         {
             Vector2 toBall = ball.position - transform.position;

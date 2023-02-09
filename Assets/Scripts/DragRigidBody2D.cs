@@ -2,6 +2,11 @@
 using System.Collections;
 using System;
 
+/// <summary>
+///     JON23:  It's a debugging script that helps to tweak NPC behaviour
+///             Prbably some safeguarding from making it into production could help
+///             For example adding if(Application.isEditor) or Conditional compilation
+/// </summary>
 public class DragRigidBody2D : MonoBehaviour
 {
     // add this to your player. Make sure there is a rigidbody2d attached to it.

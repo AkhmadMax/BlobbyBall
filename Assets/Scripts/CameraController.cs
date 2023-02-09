@@ -10,6 +10,7 @@ public class CameraController : MonoBehaviour
         {
             float wantedXpos = BallBehaviour.Instance.transform.position.x / 8f;
             Vector3 currentPos = transform.position;
+            // JON23: introduce variable for the float number
             currentPos.x = Mathf.Lerp(currentPos.x, wantedXpos, 0.05f);
             transform.position = currentPos;
 

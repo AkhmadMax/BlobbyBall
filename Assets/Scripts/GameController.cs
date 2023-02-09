@@ -4,6 +4,9 @@ using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.UI;
 
+/// <summary>
+///     JON23:  1. Rename the class to GameManager
+/// </summary>
 public class GameController : MonoBehaviour {
 
     public Text scoreP1Label;
@@ -32,6 +35,7 @@ public class GameController : MonoBehaviour {
     {
         get 
         {
+            // JON23: Add some error handling for cases when GameController is not present in the scene at all
             if (instance == null)
                 instance = FindObjectOfType<GameController>();
 
@@ -44,6 +48,7 @@ public class GameController : MonoBehaviour {
         StartNewGame(true, true);
     }
 
+    // JON23: Reneme to AssignPoint
     public void Point(PlayerController.Player player)
     {
         switch(player)
@@ -65,6 +70,9 @@ public class GameController : MonoBehaviour {
         }
     }
 
+    // JON23:   This method is called directly from OnClick() handler in UI
+    //          Also the same button directly calls UI screen to hide
+    //          To my taste it would be bettwe if GameManager would hadle it alltogether by itself
     public void StartNewGame(bool npc)
     {
         if (npc)
@@ -76,6 +84,8 @@ public class GameController : MonoBehaviour {
 
     public void StartNewGame(bool npc1, bool npc2)
     {
+        // JON23:   Destroying and Instantiaton comparably heavy operations that could lead to hickups
+        //          In this case it doesn't matter, but if the character prefabs become more complex it can start affect performance
         Destroy(player1);
         Destroy(player2);
 
@@ -84,6 +94,7 @@ public class GameController : MonoBehaviour {
         else
         {
             player1 = Instantiate(humanControlled, player1InitPos, Quaternion.identity);
+            // JON23: Ideally it's better to avoid calling GetComponent in runtime and access cached references
             player1.GetComponent<PlayerController>().controls = PlayerController.Controls.WASD;
             player1.GetComponent<Renderer>().material = player1Mtl;
         }
@@ -107,6 +118,7 @@ public class GameController : MonoBehaviour {
         BallBehaviour.Instance.ResetPosition(player);
     }
 
+    // JON23: Obviously it is just unfinished logic, the game is endless at this point
     public void Game(PlayerController.Player player)
     {
         Debug.Log(player + " won");
@@ -116,6 +128,7 @@ public class GameController : MonoBehaviour {
     {
         if(Input.GetKeyUp(KeyCode.Escape))
         {
+            // Better to wrap into a method PauseGame, many things can be called when game is paused along with Showing the UI Panel
             WelcomeScreen.Instane.Show();
         }
     }

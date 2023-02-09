@@ -2,6 +2,13 @@
 using System.Collections.Generic;
 using UnityEngine;
 
+/// <summary>
+///     JON23:  1.  The class directly assign points via GameController. 
+///                 Would be better to fire an event when the ball hits the ground, 
+///                 and GameManager and other classes could subscribe to it and do what they need
+///             2.  The class is a Singleton. But what if we have multiple balls in the arcade mode of the game?
+///                 Using a Singleton pattern is not justified here
+/// </summary>
 public class BallBehaviour : MonoBehaviour
 {
     public AudioClip[] hit;
@@ -9,6 +16,8 @@ public class BallBehaviour : MonoBehaviour
 
     private static BallBehaviour _instance;
     Rigidbody2D rb;
+
+    // JON23: Clean-up
     Collider2D _collider;
 
     Vector3 ballInitPosP1 = new Vector3(-1.2f, 1.5f, 0);
