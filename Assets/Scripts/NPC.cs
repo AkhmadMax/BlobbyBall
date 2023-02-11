@@ -2,52 +2,87 @@
 using System.Collections.Generic;
 using UnityEngine;
 
-/// <summary>
-///     JON23:  1. Name of the class does not reflect its content fully. The class basically implements AI of NPC
-///             2. The code is too rigid to extentions and not reactive to modifications of the scene it acts in
-///             3. The NPC would break if a second ball would be introduced to the scene
-/// </summary>
 public class NPC : MonoBehaviour {
 
-    Transform ball;
-    PlayerController controller;
+    private Transform ball;
+    private PlayerController controller;
+    private float receivingPosition;
 
-    void Awake()
-    {
-        controller = GetComponent<PlayerController>();
+    private float ReceivingPosition { get { return receivingPosition; } }
+
+    private const float receivingPositionOffset = 0.5f;
+    private const float positioningTolerance = 0.1f;
+
+    enum Side {
+        Left,
+        Right
     }
+
+    private Side playSide;
 
     private void Start()
     {
-        ball = BallBehaviour.Instance.transform;
+        Init();
     }
 
-    /// <summary>
-    ///    JON23:   1.  The two blocks of code for left and right side logic is basically a copy-paste . It contradicts DRY principle
-    ///             2.  Throwing code directly into Update methods is bad for code readability. What happens there exactly?
-    ///             3.  The code need to be decomposed at least to several methods
-    ///             4.  I see I've put comments to help myself navigate in the code. Comments tend to outdate, instead I should have just split the code into smaller pieces
-    ///             5.  There are arbitrary numbers like 0.2, 0.3, 0.5 without any name or meaning. It drastically decreases quality of the code. Should be replaced with meaningful variables
-    ///                 I can see that these mystic numbers depend on the size of the rigidbody. It means that if the player size changes this values will stop working as expected
-    /// </summary>
+    private void Init()
+    {
+        controller = GetComponent<PlayerController>();
+        ball = BallBehaviour.Instance.transform;
+
+        playSide = controller.initPos.x < 0 ? Side.Left : Side.Right;
+        SetRecevingPosition(playSide);
+    }
+
+    void SetRecevingPosition(Side playSide)
+    {
+        switch (playSide)
+        {
+            case Side.Left:
+                receivingPosition = controller.initPos.x - receivingPositionOffset;
+                break;
+            case Side.Right:
+                receivingPosition = controller.initPos.x + receivingPositionOffset;
+                break;
+        }
+    }
+
+    private void ApproachReceivingPosition()
+    {
+        float displacement = transform.position.x - receivingPosition;
+
+        Debug.Log(ReceivingPosition + " " + displacement);
+
+        if (Mathf.Abs(displacement) < positioningTolerance)
+        {
+            controller.Stop();
+        }
+        else
+        {
+            if (displacement > 0) controller.MoveLeft();
+            if (displacement < 0) controller.MoveRight();
+        }
+
+
+    }
+
+    private void FollowTheBall()
+    {
+
+    }
+
     void Update()
     {
+
+
 
         if(controller.initPos.x < 0) // if NPC plays on left field
         {
             Vector2 toBall = ball.position - transform.position;
 
-            float wantedPosX;
             if (ball.position.x > 0) // if the ball on enemy's side then move to initPos
             {
-                wantedPosX = controller.initPos.x - 0.5f;
-
-                if (transform.position.x - wantedPosX < 0.1 && transform.position.x - wantedPosX > 0)
-                    controller.Stop();
-                else if (transform.position.x - wantedPosX > 0)
-                    controller.MoveLeft();
-                else if (transform.position.x - wantedPosX < 0)
-                    controller.MoveRight();
+                ApproachReceivingPosition();
             }
             else // move towards the ball
             {
@@ -87,17 +122,9 @@ public class NPC : MonoBehaviour {
         {
             Vector2 toBall = transform.position - ball.position;
 
-            float wantedPosX;
             if (ball.position.x < 0) // if the ball on enemy's side then move to initPos
             {
-                wantedPosX = controller.initPos.x + 0.5f;
-
-                if (transform.position.x - wantedPosX < 0.1 && transform.position.x - wantedPosX > 0)
-                    controller.Stop();
-                else if (transform.position.x - wantedPosX > 0)
-                    controller.MoveLeft();
-                else if (transform.position.x - wantedPosX < 0)
-                    controller.MoveRight();
+                ApproachReceivingPosition();
             }
             else // move towards the ball
             {
