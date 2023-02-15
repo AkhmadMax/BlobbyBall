@@ -119,7 +119,9 @@ public class NPC : MonoBehaviour {
 
     void Play()
     {
-        Vector2 toBall = ball.position - transform.position;
+        Vector2 toBall = Vector2.zero;
+        if (playSide == Side.Left) toBall = ball.position - transform.position;
+        if (playSide == Side.Right) toBall = transform.position - ball.position;
 
         if (Mathf.Abs(ball.position.x) > nearNetZone)
         {
@@ -143,61 +145,28 @@ public class NPC : MonoBehaviour {
 
     void Update()
     {
-        if(controller.initPos.x < 0) // if NPC plays on left field
+        switch(playSide)
         {
-
-            if (ball.position.x > 0) // if the ball on enemy's side then move to initPos
-            {
-                ApproachReceivingPosition();
-            }
-            else // move towards the ball
-            {
-                Play();
-            }
-        }
-        else // if NPC plays on the right side
-        {
-            Vector2 toBall = transform.position - ball.position;
-
-
-            if (ball.position.x < 0) // if the ball on enemy's side then move to initPos
-            {
-                ApproachReceivingPosition();
-            }
-            else // move towards the ball
-            {
-                if (ball.position.x > 0.5)
+            case Side.Left:
+                if (ball.position.x > 0) // if the ball on enemy's side then move to initPos
                 {
-                    if (toBall.x <= 0.3f && toBall.x >= 0.2f)
-                    {
-                        controller.Stop();
-                        if (ball.position.y < 1.5)
-                            controller.Jump();
-                        else
-                            controller.LongJump();
-                    }
-                    else if (toBall.x > 0.2)
-                        controller.MoveLeft();
-                    else if (toBall.x < 0.3)
-                        controller.MoveRight();
+                    ApproachReceivingPosition();
                 }
-                else
+                else // move towards the ball
                 {
-                    if (toBall.x <= 0.2f && toBall.x >= 0.1f)
-                    {
-                        controller.Stop();
-                        if (ball.position.y < 1.5)
-                            controller.Jump();
-                        else
-                            controller.LongJump();
-                    }
-                    else if (toBall.x > 0.1)
-                        controller.MoveLeft();
-                    else if (toBall.x < 0.2)
-                        controller.MoveRight();
+                    Play();
                 }
-            }
+                break;
+            case Side.Right:
+                if (ball.position.x < 0) // if the ball on enemy's side then move to initPos
+                {
+                    ApproachReceivingPosition();
+                }
+                else // move towards the ball
+                {
+                    Play();
+                }
+                break;
         }
-
     }
 }
