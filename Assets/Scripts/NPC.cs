@@ -4,19 +4,17 @@ using UnityEngine;
 
 public class NPC : MonoBehaviour {
 
-    private Transform ball;
-    private PlayerController controller;
-    private float receivingPosition;
-    private Vector2 forwardVector;
-
-    private float ReceivingPosition { get { return receivingPosition; } }
-
     // NPC parameters that affect its behaviour
-    private const float receivingPositionOffset = 0.5f;
+    private const float receivingPositionOffset = -0.5f;
     private const float nearNetZone = 0.5f;
     private const float tolerance = 0.1f;
     private const float lowHitOffset = 0.25f;
     private const float highHitOffset = 0.15f;
+
+    private Transform ball;
+    private PlayerController controller;
+    private float receivingPosition;
+    private Vector2 forwardVector;
 
     public struct PositionRange
     {
@@ -35,12 +33,12 @@ public class NPC : MonoBehaviour {
     private PositionRange highHitRange;
     private PositionRange lowHitRange;
 
-    enum Side {
+    enum PlaySide {
         Left,
         Right
     }
 
-    private Side playSide;
+    private PlaySide playSide;
 
     private void Start()
     {
@@ -52,26 +50,25 @@ public class NPC : MonoBehaviour {
         controller = GetComponent<PlayerController>();
         ball = BallBehaviour.Instance.transform;
 
-        playSide = controller.initPos.x < 0 ? Side.Left : Side.Right;
-        forwardVector = playSide == Side.Left ? Vector2.right : Vector2.left;
+        playSide = controller.initPos.x < 0 ? PlaySide.Left : PlaySide.Right;
+        forwardVector = playSide == PlaySide.Left ? Vector2.right : Vector2.left;
 
         highHitRange = new PositionRange(highHitOffset, tolerance);
         lowHitRange = new PositionRange(lowHitOffset, tolerance);
 
-        SetRecevingPosition(playSide);
+        receivingPosition = controller.initPos.x + receivingPositionOffset * forwardVector.x;
     }
 
-    void SetRecevingPosition(Side playSide)
+    void Update()
     {
-        switch (playSide)
-        {
-            case Side.Left:
-                receivingPosition = controller.initPos.x - receivingPositionOffset;
-                break;
-            case Side.Right:
-                receivingPosition = controller.initPos.x + receivingPositionOffset;
-                break;
-        }
+            if (BallOnEnemySide()) // if the ball on enemy's side then improve position to receive it
+            {
+                ApproachReceivingPosition();
+            }
+            else // move towards the ball and hit
+            {
+                Play();
+            }
     }
 
     private void ApproachReceivingPosition()
@@ -89,6 +86,29 @@ public class NPC : MonoBehaviour {
             if (displacement < 0) controller.MoveRight();
         }
     }
+    void Play()
+    {
+        float toBall = GetDistanceToBall();
+
+        if (Mathf.Abs(ball.position.x) > nearNetZone)
+        {
+            AdjustPositionOrJump(toBall, lowHitRange);
+        }
+        else
+        {
+            AdjustPositionOrJump(toBall, highHitRange);
+        }
+    }
+
+    void AdjustPositionOrJump(float displacement, PositionRange positioning)
+    {
+        if (positioning.Min() <= displacement && displacement <= positioning.Max())
+        {
+            Jump();
+        }
+        else if (displacement > positioning.Max()) MoveForward();
+        else if (displacement < positioning.Min()) MoveBackward();
+    }
 
     void Jump()
     {
@@ -101,72 +121,35 @@ public class NPC : MonoBehaviour {
 
     void MoveForward()
     {
-        if (playSide == Side.Left)
+        if (playSide == PlaySide.Left)
             controller.MoveRight();
-        
-        if(playSide == Side.Right) 
+
+        if (playSide == PlaySide.Right)
             controller.MoveLeft();
     }
 
     void MoveBackward()
     {
-        if (playSide == Side.Left)
+        if (playSide == PlaySide.Left)
             controller.MoveLeft();
 
-        if (playSide == Side.Right)
+        if (playSide == PlaySide.Right)
             controller.MoveRight();
     }
 
-    void Play()
+    bool BallOnEnemySide()
     {
-        Vector2 toBall = Vector2.zero;
-        if (playSide == Side.Left) toBall = ball.position - transform.position;
-        if (playSide == Side.Right) toBall = transform.position - ball.position;
-
-        if (Mathf.Abs(ball.position.x) > nearNetZone)
-        {
-            AdjustPositionOrJump(toBall.x, lowHitRange);
-        }
-        else
-        {
-            AdjustPositionOrJump(toBall.x, highHitRange);
-        }
+        float subjectiveBallPosition = ball.position.x * forwardVector.x;
+        if (subjectiveBallPosition > 0)
+            return true;
+        return false;
     }
 
-    void AdjustPositionOrJump(float targetPosition, PositionRange positioning)
+    float GetDistanceToBall()
     {
-        if (positioning.Min() <= targetPosition && targetPosition <= positioning.Max())
-        {
-            Jump();
-        }
-        else if (targetPosition > positioning.Max()) MoveForward();
-        else if (targetPosition < positioning.Min()) MoveBackward();
-    }
-
-    void Update()
-    {
-        switch(playSide)
-        {
-            case Side.Left:
-                if (ball.position.x > 0) // if the ball on enemy's side then move to initPos
-                {
-                    ApproachReceivingPosition();
-                }
-                else // move towards the ball
-                {
-                    Play();
-                }
-                break;
-            case Side.Right:
-                if (ball.position.x < 0) // if the ball on enemy's side then move to initPos
-                {
-                    ApproachReceivingPosition();
-                }
-                else // move towards the ball
-                {
-                    Play();
-                }
-                break;
-        }
+        float npcHPos = transform.position.x;
+        float ballHPos = ball.position.x;
+        float directedDistance = (ballHPos - npcHPos) * forwardVector.x;
+        return directedDistance;
     }
 }
