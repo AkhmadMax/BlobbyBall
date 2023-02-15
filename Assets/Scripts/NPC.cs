@@ -117,34 +117,28 @@ public class NPC : MonoBehaviour {
             controller.MoveRight();
     }
 
-    void AdjustPosition()
+    void Play()
     {
         Vector2 toBall = ball.position - transform.position;
 
         if (Mathf.Abs(ball.position.x) > nearNetZone)
         {
-            if (lowHitRange.Min() <= toBall.x && toBall.x <= lowHitRange.Max())
-            {
-                Jump();
-            }
-            else if (toBall.x > lowHitRange.Max()) MoveForward();
-            else if (toBall.x < lowHitRange.Min()) MoveBackward();
+            AdjustPositionOrJump(toBall.x, lowHitRange);
         }
         else
         {
-            if (0.1f <= toBall.x && toBall.x <= 0.2f)
-            {
-                controller.Stop();
-                if (ball.position.y < 1.5)
-                    controller.Jump();
-                else
-                    controller.LongJump();
-            }
-            else if (toBall.x > 0.1)
-                controller.MoveRight();
-            else if (toBall.x < 0.2)
-                controller.MoveLeft();
+            AdjustPositionOrJump(toBall.x, highHitRange);
         }
+    }
+
+    void AdjustPositionOrJump(float targetPosition, PositionRange positioning)
+    {
+        if (positioning.Min() <= targetPosition && targetPosition <= positioning.Max())
+        {
+            Jump();
+        }
+        else if (targetPosition > positioning.Max()) MoveForward();
+        else if (targetPosition < positioning.Min()) MoveBackward();
     }
 
     void Update()
@@ -158,7 +152,7 @@ public class NPC : MonoBehaviour {
             }
             else // move towards the ball
             {
-                AdjustPosition();
+                Play();
             }
         }
         else // if NPC plays on the right side
