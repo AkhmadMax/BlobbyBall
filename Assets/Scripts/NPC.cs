@@ -1,44 +1,32 @@
-﻿using System.Collections;
-using System.Collections.Generic;
-using UnityEngine;
+﻿using UnityEngine;
 
-public class NPC : MonoBehaviour {
-
-    // NPC parameters that affect its behaviour
-    private const float receivingPositionOffset = -0.5f;
+public class NPC : MonoBehaviour
+{
+    #region NPC Behaviour Parameters
+    // The parameters can be used to create different types of NPC playstyle
     private const float nearNetZone = 0.5f;
     private const float tolerance = 0.1f;
     private const float lowHitOffset = 0.25f;
     private const float highHitOffset = 0.15f;
+    private const float receivingPositionOffset = -0.5f;
+    #endregion
 
+    // References to externall classes
     private Transform ball;
     private PlayerController controller;
+
+    // Variables initialized during runtime
+    private PlaySide playSide;
     private float receivingPosition;
     private Vector2 forwardVector;
-
-    public struct PositionRange
-    {
-        float position;
-        float tolerance;
-
-        public PositionRange(float position, float tolerance)
-        {
-            this.position = position;
-            this.tolerance = tolerance / 2f;
-        }
-        public float Min()  {   return this.position - this.tolerance;  }
-        public float Max()  {   return this.position + this.tolerance;  }
-    }
-
     private PositionRange highHitRange;
     private PositionRange lowHitRange;
 
-    enum PlaySide {
+    enum PlaySide
+    {
         Left,
         Right
     }
-
-    private PlaySide playSide;
 
     private void Start()
     {
@@ -61,20 +49,19 @@ public class NPC : MonoBehaviour {
 
     void Update()
     {
-            if (BallOnEnemySide()) // if the ball on enemy's side then improve position to receive it
-            {
-                ApproachReceivingPosition();
-            }
-            else // move towards the ball and hit
-            {
-                Play();
-            }
+        if (BallOnEnemySide()) // if the ball on enemy's side then improve position to receive it
+        {
+            ApproachReceivingPosition();
+        }
+        else // move towards the ball and hit
+        {
+            Play();
+        }
     }
 
     private void ApproachReceivingPosition()
     {
         float displacement = transform.position.x - receivingPosition;
-
 
         if (Mathf.Abs(displacement) < tolerance)
         {
@@ -86,6 +73,7 @@ public class NPC : MonoBehaviour {
             if (displacement < 0) controller.MoveRight();
         }
     }
+
     void Play()
     {
         float toBall = GetDistanceToBall();
@@ -151,5 +139,19 @@ public class NPC : MonoBehaviour {
         float ballHPos = ball.position.x;
         float directedDistance = (ballHPos - npcHPos) * forwardVector.x;
         return directedDistance;
+    }
+
+    public struct PositionRange
+    {
+        float position;
+        float tolerance;
+
+        public PositionRange(float position, float tolerance)
+        {
+            this.position = position;
+            this.tolerance = tolerance / 2f;
+        }
+        public float Min() { return this.position - this.tolerance; }
+        public float Max() { return this.position + this.tolerance; }
     }
 }
