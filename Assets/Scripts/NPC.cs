@@ -11,11 +11,29 @@ public class NPC : MonoBehaviour {
 
     private float ReceivingPosition { get { return receivingPosition; } }
 
+    // NPC parameters that affect its behaviour
     private const float receivingPositionOffset = 0.5f;
     private const float nearNetZone = 0.5f;
-    private const float positioningTolerance = 0.1f;
-    private const float highReboundOffset = 0.25f;
-    private const float lowReboundOffset = 0.25f;
+    private const float tolerance = 0.1f;
+    private const float lowHitOffset = 0.25f;
+    private const float highHitOffset = 0.15f;
+
+    public struct PositionRange
+    {
+        float position;
+        float tolerance;
+
+        public PositionRange(float position, float tolerance)
+        {
+            this.position = position;
+            this.tolerance = tolerance / 2f;
+        }
+        public float Min()  {   return this.position - this.tolerance;  }
+        public float Max()  {   return this.position + this.tolerance;  }
+    }
+
+    private PositionRange highHitRange;
+    private PositionRange lowHitRange;
 
     enum Side {
         Left,
@@ -36,6 +54,9 @@ public class NPC : MonoBehaviour {
 
         playSide = controller.initPos.x < 0 ? Side.Left : Side.Right;
         forwardVector = playSide == Side.Left ? Vector2.right : Vector2.left;
+
+        highHitRange = new PositionRange(highHitOffset, tolerance);
+        lowHitRange = new PositionRange(lowHitOffset, tolerance);
 
         SetRecevingPosition(playSide);
     }
@@ -58,7 +79,7 @@ public class NPC : MonoBehaviour {
         float displacement = transform.position.x - receivingPosition;
 
 
-        if (Mathf.Abs(displacement) < positioningTolerance)
+        if (Mathf.Abs(displacement) < tolerance)
         {
             controller.Stop();
         }
@@ -69,28 +90,49 @@ public class NPC : MonoBehaviour {
         }
     }
 
+    void Jump()
+    {
+        controller.Stop();
+        if (ball.position.y < 1.5)
+            controller.Jump();
+        else
+            controller.LongJump();
+    }
+
+    void MoveForward()
+    {
+        if (playSide == Side.Left)
+            controller.MoveRight();
+        
+        if(playSide == Side.Right) 
+            controller.MoveLeft();
+    }
+
+    void MoveBackward()
+    {
+        if (playSide == Side.Left)
+            controller.MoveLeft();
+
+        if (playSide == Side.Right)
+            controller.MoveRight();
+    }
+
     void AdjustPosition()
     {
         Vector2 toBall = ball.position - transform.position;
 
         if (Mathf.Abs(ball.position.x) > nearNetZone)
         {
-            if (toBall.x <= 0.3f && toBall.x >= 0.2f)
+            if (lowHitRange.Min() <= toBall.x && toBall.x <= lowHitRange.Max())
             {
-                controller.Stop();
-                if (ball.position.y < 1.5)
-                    controller.Jump();
-                else
-                    controller.LongJump();
+                Jump();
             }
-            else if (toBall.x > 0.2)
-                controller.MoveRight();
-            else if (toBall.x < 0.3)
-                controller.MoveLeft();
+            else if (toBall.x > lowHitRange.Max()) MoveForward();
+            else if (toBall.x < lowHitRange.Min()) MoveBackward();
         }
         else
         {
-            if (toBall.x <= 0.2f && toBall.x >= 0.1f)
+            if (0.1f <= toBall.x && toBall.x <= 0.2f)
             {
                 controller.Stop();
                 if (ball.position.y < 1.5)
